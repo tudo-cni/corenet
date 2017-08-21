@@ -36,68 +36,73 @@ from libmich.utils.repr import *
 from libmich.formats.L3Mobile import parse_L3
 from libmich.mobnet.MME import *
 from libmich.mobnet.AuC import AuC
-from libmich.mobnet.GTPmgr import *
+#from libmich.mobnet.GTPmgr import *
+from libmich.mobnet.GTPmgr import ARPd
 from libmich.mobnet.SMSmgr import SMSRelay
 from libmich.mobnet.utils import mac_aton
+from GTPfake import GTPfake as GTPUd
 
 # list of UE IMSI and associated IP address and phone number (for SMS)
 # those IMSI needs to be configured in libmich/mobnet/AuC.db too
-UE = {'001010000000001': {'IP': '192.168.1.201', 'Num': '0001'},
-      '001010000000002': {'IP': '192.168.1.202', 'Num': '0002'},
+UE = {'001010000000001': {'IP': '192.168.3.201', 'Num': '0001'},
+      '001010000000002': {'IP': '192.168.3.202', 'Num': '0002'},
+      '001012342001266': {'IP': '192.168.3.202', 'Num': '0003'},
+      '001022342000102': {'IP': '192.168.3.203', 'Num': '0004'},
+      '208930000000002': {'IP': '192.168.3.204', 'Num': '0005'},
       }
 
 def main():
-    
+
     # debugging / tracing level
-    AuC.DEBUG = ('ERR', 'WNG', 'INF')
+    AuC.DEBUG = ('ERR', 'WNG', 'INF', 'DBG')
     ARPd.DEBUG = ('ERR', 'WNG', 'INF')
-    GTPUd.DEBUG = ('ERR', 'WNG', 'INF')
-    SMSRelay.DEBUG = ('ERR', 'WNG', 'INF')
-    MMEd.DEBUG = ('ERR', 'WNG', 'INF') #, 'DBG')
+    GTPUd.DEBUG = ('ERR', 'WNG', 'INF', 'DBG')
+    SMSRelay.DEBUG = ('ERR', 'WNG', 'INF', 'DBG')
+    MMEd.DEBUG = ('ERR', 'WNG', 'INF', 'DBG')
     MMEd.TRACE_SK = False
     MMEd.TRACE_ASN1 = False
-    MMEd.TRACE_SEC = True
-    MMEd.TRACE_NAS = True
-    MMEd.TRACE_SMS = True
-    MMEd_server_addr = ('10.1.1.1', 36412)
-    
+    MMEd.TRACE_SEC = False
+    MMEd.TRACE_NAS = False
+    MMEd.TRACE_SMS = False
+    MMEd_server_addr = ('192.168.4.80', 36412)
+
     ### AuC config ###
     # authentication center
     AuC.OP = 'ffffffffffffffff'
-    
+
     ### ARPd config ###
     # ARP resolver for the PGW on SGi
-    ARPd.GGSN_ETH_IF = 'eth0'
-    ARPd.GGSN_MAC_ADDR = '08:00:00:01:02:03'
-    ARPd.GGSN_IP_ADDR = '192.168.1.100'
+    ARPd.GGSN_ETH_IF = 'br-neta' # ethernet interface toward external networks (e.g. Internet)
+    ARPd.GGSN_MAC_ADDR = '1e:52:06:07:1c:4b' # MAC address of the ethernet interface toward external networks
+    ARPd.GGSN_IP_ADDR = '192.168.1.80' # IP address set to the ethernet interface toward external networks
     # IP given to UE on SGi
-    ARPd.SUBNET_PREFIX = '192.168.1'
+    ARPd.SUBNET_PREFIX = '192.168.1' # subnet prefix of the LAN to which the ethernet interface to external network is connected
     ARPd.IP_POOL = []
     for ue_config in UE.values():
         ARPd.IP_POOL.append(ue_config['IP'])
     # IPv4 1st hop after PGW on SGi
-    ARPd.ROUTER_MAC_ADDR = 'f4:00:00:01:02:03'
-    ARPd.ROUTER_IP_ADDR = '192.168.1.1'
-    
+    ARPd.ROUTER_MAC_ADDR = 'ae:85:d8:35:2f:2b' # the LAN router (1st IP hop) MAC address
+    ARPd.ROUTER_IP_ADDR = '192.168.1.43' # the LAN router (1st IP hop) IP address
+
     ### GTPUd config ###
     # GTP user-plane packets forwarder
     # internal interface (SGW S1U user-plane)
-    GTPUd.INT_IP = '10.1.1.1'
+    GTPUd.INT_IP = '192.168.4.210' # IP address exposed on the RAN side
     GTPUd.INT_PORT = 2152
     # GTP User-Plane handler external interface (PGW SGi)
-    GTPUd.EXT_IF = ARPd.GGSN_ETH_IF
-    GTPUd.GGSN_MAC_ADDR = ARPd.GGSN_MAC_ADDR
+    GTPUd.EXT_IF = ARPd.GGSN_ETH_IF # same as ARPd.GGSN_ETH_IF
+    GTPUd.GGSN_MAC_ADDR = ARPd.GGSN_MAC_ADDR # same as ARPd.GGSN_MAC_ADDR
     # mobile traffic filtering
     #GTPUd.BLACKHOLING = False # allow all the traffic from handsets
-    GTPUd.BLACKHOLING = 'ext' # allow only the traffic on the local LAN, and on allowed ports for external networks
-    #GTPUd.BLACKHOLING = True # discard all the traffic from handsets, except on allowed ports
+    #GTPUd.BLACKHOLING = 'ext' # allow only the traffic on the local LAN, and on allowed ports for external networks
+    GTPUd.BLACKHOLING = True # discard all the traffic from handsets, except on allowed ports
     GTPUd.WL_ACTIVE = True # enables whitelist ports when BLACKHOLING is enabled
     GTPUd.WL_PORTS = [('UDP', 53), ('UDP', 123)] # allow only those ports when BLACKHOLING is enabled
-    
+
     ### SMS Relay config ###
     SMSRelay.SMSC_RP_NUM = '990123' # SMS Relay phone number
     SMSRelay.TIMEZONE = 0x80
-    
+
     ### MME config ###
     MMEd.ConfigS1 = {
     'MMEname': 'CorenetMME', # optional
@@ -117,21 +122,21 @@ def main():
     UEd.TRACE_SMS = True # trace all SMS procedures
     # NAS security
     UEd.NASSEC_MAC = True # enforce NAS security
-    UEd.NASSEC_ULCNT = True # enforce NAS UL count
+    UEd.NASSEC_ULCNT = False # enforce NAS UL count
     UEd.AUTH_POL_ATT = 1 # attach authentication policy
-    UEd.AUTH_POL_TAU = 1 # TAU authentication policy
+    UEd.AUTH_POL_TAU = 0 # TAU authentication policy
     UEd.AUTH_POL_SERV = 10 # service request authentication policy
     UEd.AUTH_AMF = b'\x80\x00' # Authentication Management Field
     UEd.SMC_IMEI_POL = 1 # request IMEISV only once during security mode ctrl
     UEd.SMC_EEA = [0, 1, 2, 3] # encryption algorithm priority: 0:None, 1:SNOW, 2:AES, 3:ZUC
     UEd.SMC_EIA = [1, 2, 3] # integrity protection algorithm priority: 0:None (emergency call only), 1:SNOW, 2:AES, 3:ZUC
     # ATTACH extended features
-    UEd.ATT_EQU_PLMN = None # equivalent PLMNs 
+    UEd.ATT_EQU_PLMN = None # equivalent PLMNs
     UEd.ATT_ECN_LIST = None # list of (emergency service category, emergency number)
     UEd.ATT_EPS_FEAT = None # EPS network feature support
     UEd.ATT_ADD_UPD = None
     # APN
-    UEd.ESM_APN_DEF = 'corenet' # default APN
+    UEd.ESM_APN_DEF = 'default' # default APN
     UEd.ESM_PDN = {
         'corenet': {
             'IP':[1, '0.0.0.0'], # PDN type (1:IPv4, 2:IPv6, 3:IPv4v6), UE IP@ will be set at runtime
@@ -141,10 +146,18 @@ def main():
             'PreemptCap': 'shall-not-trigger-pre-emption', # or 'may-trigger-pre-emption' (S1 parameter)
             'PreemptVuln': 'not-pre-emptable', # 'pre-emptable' (S1 parameter)
             },
-        
+            'default': {
+                'IP':[3, '0.0.0.0'], # PDN type (1:IPv4, 2:IPv6, 3:IPv4v6), UE IP@ will be set at runtime
+                'DNS':['192.168.1.40', '8.8.8.8'], # 2 IP@ for DNS servers
+                'QCI': 9, # QoS class id (9: internet browsing), NAS + S1 parameter
+                'PriorityLevel': 15, # no priority (S1 parameter)
+                'PreemptCap': 'shall-not-trigger-pre-emption', # or 'may-trigger-pre-emption' (S1 parameter)ipshell = InteractiveShellEmbed(
+                'PreemptVuln': 'not-pre-emptable', # 'pre-emptable' (S1 parameter)
+                },
+
         } # list of configured APN
-    
-    
+
+
     # start AuC, ARPd and GTPUd, MMEd
     log('\n\n\n', withdate=False)
     log('--------########<<<<<<<<////////:::::::: CORENET ::::::::\\\\\\\\\\\\\\\\>>>>>>>>########--------')
@@ -156,26 +169,26 @@ def main():
                        'ue': UE,
                        'enb': {},
                        })
-    
+
     # You can add the TCPSYNACK module in GTPd.MOD to auto-answer to UE TCP-SYN packets
     # and / or DNSRESP module in GTPd.MOD to auto-answer to UE DNS requests
     # (do not forget to enable GTPd.BLACKHOLING in this case)
-    MOD.GTPUd = GTPd
+    #MOD.GTPUd = GTPd
     #GTPd.MOD = [DNSRESP, TCPSYNACK]
     GTPd.MOD = []
-    
+
     # configure MMEd IO to AuC, GTPUd and SMSRelay
     MME.AUCd = AUCd
     MME.GTPd = GTPd
     MME.SMSd = SMSd
     SMSd.MME = MME
-    
+
     def stop():
         AUCd.stop()
         GTPd.stop()
         SMSd.stop()
         MME.stop()
-    
+
     # configure IPython corenet banner
     _ipy_banner = \
         'EPC 0.2.0 loaded -- interactive Evolved Packet Core\n' \
