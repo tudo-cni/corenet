@@ -1,19 +1,19 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 #/**
-# * Software Name : corenet 
+# * Software Name : corenet
 # * Version : 0.1.0
 # *
 # * Copyright © 2015. Benoit Michau. ANSSI.
 # *
 # * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License version 2 as published
-# * by the Free Software Foundation. 
+# * by the Free Software Foundation.
 # *
 # * This program is distributed in the hope that it will be useful,
 # * but WITHOUT ANY WARRANTY; without even the implied warranty of
 # * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# * GNU General Public License for more details. 
+# * GNU General Public License for more details.
 # *
 # * You will find a copy of the terms and conditions of the GNU General Public
 # * License version 2 in the "license.txt" file or
@@ -23,7 +23,7 @@
 # *--------------------------------------------------------
 # * File Name : corenet.py
 # * Created : 2015-09-05
-# * Authors : Benoit Michau 
+# * Authors : Benoit Michau
 # *--------------------------------------------------------
 #*/
 
@@ -147,7 +147,7 @@ def main():
             'PreemptVuln': 'not-pre-emptable', # 'pre-emptable' (S1 parameter)
             },
             'default': {
-                'IP':[3, '0.0.0.0'], # PDN type (1:IPv4, 2:IPv6, 3:IPv4v6), UE IP@ will be set at runtime
+                'IP':[1, '0.0.0.0'], # PDN type (1:IPv4, 2:IPv6, 3:IPv4v6), UE IP@ will be set at runtime
                 'DNS':['192.168.1.40', '8.8.8.8'], # 2 IP@ for DNS servers
                 'QCI': 9, # QoS class id (9: internet browsing), NAS + S1 parameter
                 'PriorityLevel': 15, # no priority (S1 parameter)
@@ -206,7 +206,7 @@ def main():
         'MME-initiated procedures:\n' \
         '\tIdentification, GUTIReallocation, Authentication, ' \
         'SecurityModeControl, EMMInformation, MMEDetach'
-    
+
     # configure IPython kernel namespace
     _ipy_ns = {}
     _ipy_ns['GLOBAL'] = GLOBAL
@@ -227,7 +227,7 @@ def main():
     _ipy_ns['SecurityModeControl'] = SecurityModeControl
     _ipy_ns['EMMInformation'] = EMMInformation
     _ipy_ns['MMEDetach'] = MMEDetach
-    
+
     # interactive epc session
     ipshell = InteractiveShellEmbed(user_ns=_ipy_ns, \
                                     banner1=_ipy_banner, \
