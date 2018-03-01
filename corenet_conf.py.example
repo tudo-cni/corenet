@@ -4,8 +4,8 @@ Corenet Configuration
 
 # MME Settings
 MME_NAME = 'CorenetMME'
-MME_CODE = '47' #HEX value
-MME_GROUP = '8701' #HEX value
+MME_CODE = '1a' #HEX value
+MME_GROUP = '0001' #HEX value
 MCC = '001'
 MNC = '01'
 
@@ -25,7 +25,7 @@ PDN = {'corenet': {
 SGI_GW_IP = '172.19.99.1' # coresponds to sgi network from docker-compose
 
 # list of UE IMSI and associated IP address and phone number (for SMS)
-# those IMSI also need to be configured in
+# those IMSI also need to be configured in AUC DB file
 AUC_DB_PATH = '/conf/user_db.csv'
 UE = {
     '001010123456789': {'IP': '172.19.100.101', 'Num': '0001'},

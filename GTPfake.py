@@ -6,7 +6,7 @@ import os
 import subprocess
 from libmich.mobnet.utils import log
 
-import tun_conf as config
+import corenet_tun_conf as tun_config
 
 class GTPfake(object):
 
@@ -39,7 +39,7 @@ class GTPfake(object):
         subprocess.call(['ip', 'link', 'set', self.GTPif, 'mtu', '1500'])
         subprocess.call(['ip', 'route', 'add', self.UE_SUBNET_PREFIX + '.0/24', 'dev', self.GTPif])
         # Dummy IP goes back to host (tunneling)
-        my_virt_ip = config.OWN_VIRT_IP
+        my_virt_ip = tun_config.OWN_VIRT_IP
         ip_temp = my_virt_ip.split('.')
         ip_temp[2] = '100'
         own_ip = '.'.join(ip_temp)
